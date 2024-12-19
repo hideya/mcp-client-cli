@@ -37,7 +37,14 @@ SQLITE_DB = CONFIG_DIR / "conversations.db"
 CACHE_DIR = CONFIG_DIR / "mcp-tools"
 
 def get_cached_tools(server_param: StdioServerParameters) -> Optional[List[types.Tool]]:
-    """Retrieve cached tools if available and not expired."""
+    """Retrieve cached tools if available and not expired.
+    
+    Args:
+        server_param (StdioServerParameters): The server parameters to identify the cache.
+    
+    Returns:
+        Optional[List[types.Tool]]: A list of tools if cache is available and not expired, otherwise None.
+    """
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     cache_key = f"{server_param.command}-{'-'.join(server_param.args)}".replace("/", "-")
     cache_file = CACHE_DIR / f"{cache_key}.json"
@@ -54,7 +61,12 @@ def get_cached_tools(server_param: StdioServerParameters) -> Optional[List[types
     return [types.Tool(**tool) for tool in cache_data["tools"]]
 
 def save_tools_cache(server_param: StdioServerParameters, tools: List[types.Tool]) -> None:
-    """Save tools to cache."""
+    """Save tools to cache.
+    
+    Args:
+        server_param (StdioServerParameters): The server parameters to identify the cache.
+        tools (List[types.Tool]): The list of tools to be cached.
+    """
     cache_key = f"{server_param.command}-{'-'.join(server_param.args)}".replace("/", "-")
     cache_file = CACHE_DIR / f"{cache_key}.json"
     
@@ -68,7 +80,15 @@ def create_langchain_tool(
     tool_schema: types.Tool,
     server_params: StdioServerParameters
 ) -> BaseTool:
-    """Create a LangChain tool from MCP tool schema."""
+    """Create a LangChain tool from MCP tool schema.
+    
+    Args:
+        tool_schema (types.Tool): The MCP tool schema.
+        server_params (StdioServerParameters): The server parameters for the tool.
+    
+    Returns:
+        BaseTool: The created LangChain tool.
+    """
     input_model = jsonschema_to_pydantic(tool_schema.inputSchema)
     
     class McpTool(BaseTool):
@@ -92,7 +112,14 @@ def create_langchain_tool(
     return McpTool()
 
 async def convert_mcp_to_langchain_tools(server_params: List[StdioServerParameters]) -> List[BaseTool]:
-    """Convert MCP tools to LangChain tools."""
+    """Convert MCP tools to LangChain tools.
+    
+    Args:
+        server_params (List[StdioServerParameters]): A list of server parameters for MCP tools.
+    
+    Returns:
+        List[BaseTool]: A list of converted LangChain tools.
+    """
     langchain_tools = []
     
     for server_param in server_params:
@@ -165,6 +192,10 @@ class ConversationManager:
             await db.commit()
 
 async def run() -> None:
+    """Run the LangChain agent with MCP tools.
+    
+    This function initializes the agent, loads the configuration, and processes the query.
+    """
     parser = argparse.ArgumentParser(description='Run LangChain agent with MCP tools')
     parser.add_argument('query', nargs='*', default=[],
                        help='The query to process (default: read from stdin or use default query)')
@@ -280,6 +311,7 @@ async def run() -> None:
         await conversation_manager.save_id(thread_id, checkpointer.conn)
 
 def main() -> None:
+    """Entry point of the script."""
     asyncio.run(run())
 
 if __name__ == "__main__":
