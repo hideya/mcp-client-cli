@@ -36,6 +36,7 @@ CONFIG_DIR = Path.home() / ".llm"
 SQLITE_DB = CONFIG_DIR / "conversations.db"
 CACHE_DIR = CONFIG_DIR / "mcp-tools"
 
+
 def get_cached_tools(server_param: StdioServerParameters) -> Optional[List[types.Tool]]:
     """Retrieve cached tools if available and not expired.
     
@@ -60,6 +61,7 @@ def get_cached_tools(server_param: StdioServerParameters) -> Optional[List[types
             
     return [types.Tool(**tool) for tool in cache_data["tools"]]
 
+
 def save_tools_cache(server_param: StdioServerParameters, tools: List[types.Tool]) -> None:
     """Save tools to cache.
     
@@ -75,6 +77,7 @@ def save_tools_cache(server_param: StdioServerParameters, tools: List[types.Tool
         "tools": [tool.model_dump() for tool in tools]
     }
     cache_file.write_text(json.dumps(cache_data))
+
 
 def create_langchain_tool(
     tool_schema: types.Tool,
@@ -111,6 +114,7 @@ def create_langchain_tool(
     
     return McpTool()
 
+
 async def convert_mcp_to_langchain_tools(server_params: List[StdioServerParameters]) -> List[BaseTool]:
     """Convert MCP tools to LangChain tools.
     
@@ -142,6 +146,7 @@ async def convert_mcp_to_langchain_tools(server_params: List[StdioServerParamete
     
     return langchain_tools
 
+
 # The AgentState class is used to maintain the state of the agent during a conversation.
 class AgentState(TypedDict):
     # A list of messages exchanged in the conversation.
@@ -150,6 +155,7 @@ class AgentState(TypedDict):
     is_last_step: IsLastStep
     # The current date and time, used for context in the conversation.
     today_datetime: str
+
 
 class ConversationManager:
     """Manages conversation persistence in SQLite database."""
@@ -212,6 +218,7 @@ class ConversationManager:
                 (thread_id,)
             )
             await db.commit()
+
 
 async def run() -> None:
     """Run the LangChain agent with MCP tools.
@@ -340,9 +347,11 @@ async def run() -> None:
         # Saving the last conversation thread ID
         await conversation_manager.save_id(thread_id, checkpointer.conn)
 
+
 def main() -> None:
     """Entry point of the script."""
     asyncio.run(run())
+
 
 if __name__ == "__main__":
     main()

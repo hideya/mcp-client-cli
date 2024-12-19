@@ -10,4 +10,6 @@ wheels/
 .venv
 .env
 
+.DS_Store
+
 mcp-server-config.json
