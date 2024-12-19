@@ -142,9 +142,13 @@ async def convert_mcp_to_langchain_tools(server_params: List[StdioServerParamete
     
     return langchain_tools
 
+# The AgentState class is used to maintain the state of the agent during a conversation.
 class AgentState(TypedDict):
+    # A list of messages exchanged in the conversation.
     messages: Annotated[list[BaseMessage], add_messages]
+    # A flag indicating whether the current step is the last step in the conversation.
     is_last_step: IsLastStep
+    # The current date and time, used for context in the conversation.
     today_datetime: str
 
 class ConversationManager:
