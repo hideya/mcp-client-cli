@@ -218,6 +218,7 @@ async def run() -> None:
     
     This function initializes the agent, loads the configuration, and processes the query.
     """
+    # Argument parsing and query determination
     parser = argparse.ArgumentParser(description='Run LangChain agent with MCP tools')
     parser.add_argument('query', nargs='*', default=[],
                        help='The query to process (default: read from stdin or use default query)')
@@ -233,6 +234,7 @@ async def run() -> None:
     if args.query and args.query[0] == "commit":
         query = "check git status and diff. Then commit it with descriptive and concise commit msg"
 
+    # Configuration file loading
     config_paths = [CONFIG_FILE, CONFIG_DIR / "config.json"]
     for path in config_paths:
         if os.path.exists(path):
@@ -242,6 +244,7 @@ async def run() -> None:
     else:
         raise FileNotFoundError(f"Could not find config file in any of: {', '.join(config_paths)}")
     
+    # Server parameters initialization
     server_params = [
         StdioServerParameters(
             command=config["command"],
@@ -251,9 +254,10 @@ async def run() -> None:
         for config in server_config["mcpServers"].values()
     ]
 
+    # LangChain tools conversion
     langchain_tools = await convert_mcp_to_langchain_tools(server_params)
     
-    # Initialize the model using config
+    # Model initialization
     llm_config = server_config.get("llm", {})
     model = init_chat_model(
         model=llm_config.get("model", "gpt-4o"),
@@ -263,14 +267,17 @@ async def run() -> None:
         base_url=llm_config.get("base_url")
     )
     
+    # Prompt creation
     prompt = ChatPromptTemplate.from_messages([
         ("system", server_config["systemPrompt"]),
         ("placeholder", "{messages}")
     ])
 
+    # Conversation manager initialization
     conversation_manager = ConversationManager(SQLITE_DB)
     
     async with AsyncSqliteSaver.from_conn_string(SQLITE_DB) as checkpointer:
+        # Agent executor creation
         agent_executor = create_react_agent(
             model, 
             langchain_tools, 
@@ -279,7 +286,7 @@ async def run() -> None:
             checkpointer=checkpointer
         )
         
-        # Check if this is a continuation
+        # Query processing and continuation check
         is_continuation = query.startswith('c ')
         if is_continuation:
             query = query[2:]  # Remove 'c ' prefix
@@ -291,6 +298,7 @@ async def run() -> None:
             "today_datetime": datetime.now().isoformat(),
         }
         
+        # Message streaming and tool calls handling
         async for chunk in agent_executor.astream(
             input_messages,
             stream_mode=["messages", "values"],
@@ -329,7 +337,7 @@ async def run() -> None:
                         print("\n".join(lines))
         print()
 
-        # Save the thread_id as the last conversation
+        # Saving the last conversation thread ID
         await conversation_manager.save_id(thread_id, checkpointer.conn)
 
 def main() -> None:
