@@ -155,7 +155,11 @@ class ConversationManager:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
     
     async def _init_db(self, db) -> None:
-        """Initialize database schema."""
+        """Initialize database schema.
+        
+        Args:
+            db: The database connection object.
+        """
         await db.execute("""
             CREATE TABLE IF NOT EXISTS last_conversation (
                 id INTEGER PRIMARY KEY,
@@ -165,7 +169,11 @@ class ConversationManager:
         await db.commit()
     
     async def get_last_id(self) -> str:
-        """Get the thread ID of the last conversation."""
+        """Get the thread ID of the last conversation.
+        
+        Returns:
+            str: The thread ID of the last conversation, or a new UUID if no conversation exists.
+        """
         async with aiosqlite.connect(self.db_path) as db:
             await self._init_db(db)
             async with db.execute("SELECT thread_id FROM last_conversation LIMIT 1") as cursor:
@@ -173,7 +181,12 @@ class ConversationManager:
             return row[0] if row else uuid.uuid4().hex
     
     async def save_id(self, thread_id: str, db = None) -> None:
-        """Save thread ID as the last conversation."""
+        """Save thread ID as the last conversation.
+        
+        Args:
+            thread_id (str): The thread ID to save.
+            db: The database connection object (optional).
+        """
         if db is None:
             async with aiosqlite.connect(self.db_path) as db:
                 await self._save_id(db, thread_id)
@@ -181,7 +194,12 @@ class ConversationManager:
             await self._save_id(db, thread_id)
     
     async def _save_id(self, db, thread_id: str) -> None:
-        """Internal method to save thread ID."""
+        """Internal method to save thread ID.
+        
+        Args:
+            db: The database connection object.
+            thread_id (str): The thread ID to save.
+        """
         async with db.cursor() as cursor:
             await self._init_db(db)
             await cursor.execute("DELETE FROM last_conversation")
